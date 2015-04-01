@@ -56,7 +56,11 @@
 					<input type="password" name="password" value="geetest"/>
 				</div>
                 <div class="box">
-                    <script type="text/javascript" src="http://api.geetest.com/get.php?gt=17e0a0be98b00ed5e5b263931f3156d9&challenge={{challenge}}"></script>
+                    {% if url %}
+                    <script type="text/javascript" src="{{url}}"></script>
+                    {% else %}
+                    <p> please insert your local captcha system code! </p>
+                    {% endif %}
                 </div>
 				<div class="box">
 					<button id="submit_button">提交</button>
