@@ -42,7 +42,7 @@
                     <p> please insert your local captcha system code! </p>
                     {% endif %}
          </div>
-###Validate API 验证函数
+###5.Validate API 验证函数
         challenge = request.POST.get('geetest_challenge', '')
         validate = request.POST.get('geetest_validate', '')
         seccode = request.POST.get('geetest_seccode', '')
