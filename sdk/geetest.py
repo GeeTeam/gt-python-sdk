@@ -9,7 +9,7 @@ class geetest(object):
     def __init__(self, id, key):
         self.PRIVATE_KEY = key
         self.CAPTCHA_ID = id
-        self.PY_VERSION = "0.1.0"
+        self.PY_VERSION = "2.15.4.1.1"
 
     def geetest_register(self):
         apireg = "http://api.geetest.com/register.php?"
@@ -23,8 +23,8 @@ class geetest(object):
     def geetest_validate(self, challenge, validate, seccode):
         apiserver = "http://api.geetest.com/validate.php"
         if validate == self.md5value(self.PRIVATE_KEY + 'geetest' + challenge):
-            query = 'seccode=' + seccode + "&sdk=" + self.PY_VERSION + "&sdklang=python"
-            # print query
+            query = 'seccode=' + seccode + "&sdk=python_" + self.PY_VERSION
+            print query
             backinfo = self.postvalues(apiserver, query)
             if backinfo == self.md5value(seccode):
                 return 1
