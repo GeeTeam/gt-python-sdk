@@ -20,10 +20,10 @@ def get_captcha():
     gt =  GeetestLib(id, key)
     if gt.pre_process():
         res_str = gt.success_pre_process()
-        gt.set_gtserver_session(session.__setitem__, 1)
+        gt.set_gtserver_session(session.__setitem__, 1, gt.challenge)
     else:
         res_str = gt.fail_pre_process()
-        gt.set_gtserver_session(session.__setitem__, 0)
+        gt.set_gtserver_session(session.__setitem__, 0, gt.challenge)
     return res_str
 
 @app.route('/validate', methods=["POST"])
@@ -32,7 +32,10 @@ def validate_capthca():
     validate = request.form['geetest_validate']
     seccode = request.form['geetest_seccode']
     gt = GeetestLib(id,key)
-    gt_server_status = gt.get_gtserver_session(session.__getitem__)
+    gt.challenge = gt.get_gtserver_session(session.__getitem__, 'gt_challenge')
+    gt_server_status = gt.get_gtserver_session(session.__getitem__, 'gt_server_status')
+    if not gt.challenge == challenge[0:32]:
+        return "fail"
     if gt_server_status == 1:
         result = gt.post_validate(challenge, validate, seccode)
     else:

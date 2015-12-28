@@ -8,9 +8,7 @@ import json
 # Python_version = 2.7.6
 
 class GeetestLib(object):
-    """
-    Geetest的主要类
-    """
+
     def __init__(self, id, key):
         self.private_key = key                    #私钥
         self.captcha_ID = id                      #公钥
@@ -187,7 +185,7 @@ class GeetestLib(object):
         :param img_grp_index:
         :return result:
         """
-        thread = 3                 
+        thread = 3
         full_bg_name = str(self.md5_encode(str(full_bg_index)))[0:10]
         bg_name = str(self.md5_encode(str(img_grp_index)))[0:10]
         answer_decode = ""
@@ -206,7 +204,7 @@ class GeetestLib(object):
         else:
             return self.fail_res
 
-    def set_gtserver_session(self, set_func, status_code):
+    def set_gtserver_session(self, set_func, status_code, challenge):
         """
        设置gt-server状态值session
 
@@ -214,22 +212,29 @@ class GeetestLib(object):
        :param status_code:
         """
         set_func('gt_server_status', status_code)
+        set_func('gt_challenge', challenge)
 
-    def  get_gtserver_session(self,get_func):
+    def  get_gtserver_session(self, get_func, key):
         """
-        获取gt-server状态值session 
+        获取gt-server状态值session
 
         :param get_func:
         :return status_code:
         """
-        status_code = int(get_func('gt_server_status'))
-        return status_code
+        if key == 'gt_server_status':
+            status_code = int(get_func('gt_server_status'))
+            return status_code
+        if key == 'gt_challenge':
+            challenge = get_func('gt_challenge')
+            return challenge
+        else:
+            return False
 
     def md5_encode(self, values):
         """
         md5编码
 
-        :param values: 
+        :param values:
         :return md5:
         """
         import hashlib
@@ -291,7 +296,6 @@ class GeetestLib(object):
         """
         rand_num = random.random()*100
         return rand_num
-
 
 
 
