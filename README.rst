@@ -13,7 +13,7 @@ _______________
 快速开始
 _______________
 
-1. 从 `Github <https://github.com/GeeTeam/gt-python-sdk/>上Clone代码:
+1. 从 `Github <https://github.com/GeeTeam/gt-python-sdk/>`__ 上Clone代码:
 
 .. code-block:: bash
 
@@ -51,7 +51,7 @@ _________________
 
 1. 核心SDK库: ../python_sdk/geetest.py
 
-2. api文档:  ../doc/index.html
+2. api文档:  ../doc/api.rst
 
 3. 公钥和私钥初始化：查看../demo/django_demo/app/views.py
 
@@ -102,5 +102,4 @@ _______________
 
 +[2.0.1]
  - SDK库和django和flask demo重制
- - failback模式下的validate存在可能是js的bug待修复
- - 2015.12.24        
+ - Date : 2015.12.24        
