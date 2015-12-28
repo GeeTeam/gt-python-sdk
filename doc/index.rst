@@ -8,7 +8,7 @@ API for Python-SDK
 
 API文档
 ^^^^^^^^^^^^
-核心API库: ../python-sdk/geetest.py
+核心API库: ../python_sdk/geetest.py
 
 .. toctree::
    :maxdepth: 2
