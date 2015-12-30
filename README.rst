@@ -74,10 +74,10 @@ _________________
  gt =  GeetestLib(captcha_id, private_key)
  if gt.pre_process():
      res_str = gt.success_pre_process()
-     gt.set_gtserver_session(session.__setitem__, 1)
+     gt.set_gtserver_session(session.__setitem__, 1, gt.challenge)
  else:                   #宕机情况下提供failback方案，可自行更换
      res_str = gt.fail_pre_process()
-     gt.set_gtserver_session(session.__setitem__, 0)
+     gt.set_gtserver_session(session.__setitem__, 0, gt.challenge)
  return res_str
 
 6. validate验证：
@@ -89,7 +89,10 @@ _________________
      validate = request.POST.get('geetest_validate', '')
      seccode = request.POST.get('geetest_seccode', '')
      gt = geetest.GeetestLib(captcha_id, private_key)
+     gt_challenge = gt.get_gtserver_challenge(request.session.__getitem__)
      gt_server_status = gt.get_gtserver_session(request.session.__getitem__)
+     if not gt_challenge == challenge[0:32]:
+         return HttpResponse("fail")
      if gt_server_status == 1:
          result = gt.post_validate(challenge, validate, seccode)
      else:
@@ -99,7 +102,9 @@ _________________
 
 发布日志
 _______________
-
++[2.0.2]
+ - 添加通过session控制的challenge检查
+ - Date : 2015.12.30
 +[2.0.1]
  - SDK库和django和flask demo重制
  - Date : 2015.12.24        
