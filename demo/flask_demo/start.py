@@ -34,8 +34,6 @@ def validate_capthca():
     gt = GeetestLib(id,key)
     gt.challenge = gt.get_gtserver_challenge(session.__getitem__)
     gt_server_status = gt.get_gtserver_session(session.__getitem__)
-    if not gt.challenge == challenge[0:32]:
-        return "fail"
     if gt_server_status == 1:
         result = gt.post_validate(challenge, validate, seccode)
     else:

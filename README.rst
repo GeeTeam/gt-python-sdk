@@ -74,10 +74,10 @@ _________________
  gt =  GeetestLib(captcha_id, private_key)
  if gt.pre_process():
      res_str = gt.success_pre_process()
-     gt.set_gtserver_session(session.__setitem__, 1, gt.challenge)
+     gt.set_gtserver_session(session.__setitem__, 1)
  else:                   #宕机情况下提供failback方案，可自行更换
      res_str = gt.fail_pre_process()
-     gt.set_gtserver_session(session.__setitem__, 0, gt.challenge)
+     gt.set_gtserver_session(session.__setitem__, 0)
  return res_str
 
 6. validate验证：
@@ -91,8 +91,6 @@ _________________
      gt = geetest.GeetestLib(captcha_id, private_key)
      gt_challenge = gt.get_gtserver_challenge(request.session.__getitem__)
      gt_server_status = gt.get_gtserver_session(request.session.__getitem__)
-     if not gt_challenge == challenge[0:32]:
-         return HttpResponse("fail")
      if gt_server_status == 1:
          result = gt.post_validate(challenge, validate, seccode)
      else:

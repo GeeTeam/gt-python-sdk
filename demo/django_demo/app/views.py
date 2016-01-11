@@ -27,10 +27,10 @@ def login(request):
     gt = geetest.GeetestLib(captcha_id, private_key)
     if gt.pre_process():
         res_str = gt.success_pre_process()
-        gt.set_gtserver_session(request.session.__setitem__, 1, gt.challenge)  #request.session['status'] = 1
+        gt.set_gtserver_session(request.session.__setitem__, 1)  #request.session['status'] = 1
     else:
         res_str = gt.fail_pre_process()
-        gt.set_gtserver_session(request.session.__setitem__, 0, gt.challenge )  #request.session['status'] = 0
+        gt.set_gtserver_session(request.session.__setitem__, 0)  #request.session['status'] = 0
     return HttpResponse(res_str)
 
 def validate(request):
@@ -41,8 +41,6 @@ def validate(request):
         gt = geetest.GeetestLib(captcha_id, private_key)
         gt_challenge = gt.get_gtserver_challenge(request.session.__getitem__)
         gt_server_status = gt.get_gtserver_session(request.session.__getitem__)
-        if not gt_challenge == challenge[0:32]:
-            return HttpResponse("fail")
         if gt_server_status == 1:
             result = gt.post_validate(challenge, validate, seccode)
         else:

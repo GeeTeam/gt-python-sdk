@@ -204,7 +204,7 @@ class GeetestLib(object):
         else:
             return self.fail_res
 
-    def set_gtserver_session(self, set_func, status_code, challenge):
+    def set_gtserver_session(self, set_func, status_code):
         """
        设置gt-server状态值session,包括status_code和challenge
 
@@ -212,7 +212,6 @@ class GeetestLib(object):
        :param status_code:
         """
         set_func('gt_server_status', status_code)
-        set_func('gt_challenge', challenge)
 
     def get_gtserver_session(self, get_func):
         """
@@ -223,16 +222,6 @@ class GeetestLib(object):
         """
         status_code = int(get_func('gt_server_status'))
         return status_code
-
-    def get_gtserver_challenge(self, get_func):
-        """
-        获取gt-server状态值session的challenge
-
-        :param get_func:
-        :return challenge:
-        """
-        challenge = get_func('gt_challenge')
-        return challenge
 
     def md5_encode(self, values):
         """
