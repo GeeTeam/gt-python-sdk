@@ -16,6 +16,8 @@ class GeetestLib(object):
     FN_VALIDATE = "geetest_validate" 
     FN_SECCODE = "geetest_seccode" 
 
+    GT_STATUS_SESSION_KEY = "gt_server_status"
+
     SUCCESS_RES = "success" 
     FAIL_RES = "fail" 
 
@@ -24,9 +26,9 @@ class GeetestLib(object):
     VALIDATE_HANDLER = "/validate.php"
 
 
-    def __init__(self, id, key):
-        self.private_key = key                    #私钥
-        self.captcha_id = id                      #公钥
+    def __init__(self, captcha_id, private_key):
+        self.private_key = private_key                    #私钥
+        self.captcha_id = captcha_id                      #公钥
         self.sdk_version = VERSION              #SDK版本
 
     def pre_process(self):
@@ -36,17 +38,18 @@ class GeetestLib(object):
         :return Boolean:
         """
         status, challenge = self._register()
+        return status, self._make_response_format(status, challenge)
 
     def _register(self):
-        challenge=self._register_challenge()
+        challenge = self._register_challenge()
         if len(challenge) == 32:
             return 1, challenge
         else:
             return 0, self._make_fail_challenge()
 
     def _make_fail_challenge(self):
-        rnd1 = int(round(random.random()*100))
-        rnd2 = int(round(random.random()*100))
+        rnd1 = random.randint(0, 99)
+        rnd2 = random.randint(0, 99)
         md5_str1 = self.md5_encode(str(rnd1))
         md5_str2 = self.md5_encode(str(rnd2))
         challenge = md5_str1 + md5_str2[0:2]
@@ -55,7 +58,7 @@ class GeetestLib(object):
     def _make_response_format(self, success=1, challenge=None):
         if not challenge:
             challenge = self._make_fail_challenge()
-        string_format = json.dumps({'success': success, 'gt':self.captcha_ID ,'challenge': challenge})
+        string_format = json.dumps({'success': success, 'gt':self.captcha_id ,'challenge': challenge})
         return string_format
 
     def _register_challenge(self):
@@ -67,7 +70,7 @@ class GeetestLib(object):
             res_string = ""
         return res_string
 
-    def post_validate(self, status, challenge, validate, seccode):
+    def validate(self, status, challenge, validate, seccode):
         """
         validate二次验证.
 
@@ -131,52 +134,40 @@ class GeetestLib(object):
         :param seccode:
         :return result:
         """
-        if not self.request_is_legal(challenge, validate, seccode):
-            return self.fail_res
-        validate_str = "".join(validate.split('_'))
+        if not self._check_para(challenge, validate, seccode):
+            return self.FAIL_RES
+        validate_str = validate.split('_')
         encode_ans = validate_str[0]
         encode_fbii = validate_str[1]      #_fbii : Full Bg Img Index
         encode_igi = validate_str[2]
-        decode_ans = self.decode_response(self.challenge, encode_ans)
-        decode_fbii = self.decode_response(self.challenge, encode_fbii)
-        decode_igi = self.decode_response(self.challenge, encode_igi)  #_igi : Img Grp Index
-        validate_result = self.validate_fail_image(decode_ans, decode_fbii, decode_igi)
-        if not validate_result == self.fail_res:
-            rand1 = self.random_num()
-            md5Str = self.md5_encode(rand1 + "")
-            self.challenge = md5Str
+        decode_ans = self.decode_response(challenge, encode_ans)
+        decode_fbii = self.decode_response(challenge, encode_fbii)
+        decode_igi = self.decode_response(challenge, encode_igi)  #_igi : Img Grp Index
+        validate_result = self._validate_fail_image(decode_ans, decode_fbii, decode_igi)
         return validate_result
 
     def _check_para(self, challenge, validate, seccode):
         return bool(challenge.strip()) and bool(validate.strip()) and  bool(seccode.strip())
 
-    def validate_fail_image(self, ans, full_bg_index , img_grp_index):
-        """
-        failback模式下，简单判断轨迹是否通过
-
-        :param ans:
-        :param full_bg_index:
-        :param img_grp_index:
-        :return result:
-        """
+    def _validate_fail_image(self, ans, full_bg_index , img_grp_index):
         thread = 3
         full_bg_name = str(self.md5_encode(str(full_bg_index)))[0:10]
-        bg_name = str(self.md5_encode(str(img_grp_index)))[0:10]
+        bg_name = str(self.md5_encode(str(img_grp_index)))[10:20]
         answer_decode = ""
         for i in range(0,9):
             if i % 2 == 0:
                 answer_decode += full_bg_name[i]
             elif i % 2 == 1:
                 answer_decode += bg_name[i]
-        x_decode = answer_decode[4]
-        x_int = string.atoi(x_decode, 16)
+        x_decode = answer_decode[4:]
+        x_int = int(x_decode, 16)
         result = x_int % 200
         if result < 40:
             result = 40
         if abs(ans - result) < thread:
-            return self.success_res
+            return self.SUCCESS_RES
         else:
-            return self.fail_res
+            return self.FAIL_RES
 
     def md5_encode(self, values):
         """
@@ -196,16 +187,15 @@ class GeetestLib(object):
         :param challenge:
         :return decode_result:
         """
-        str_base = challenge[32:34]
+        str_base = challenge[32:]
         i = 0
         temp_array = []
-        while i < len(str_base):
+        for i in xrange(len(str_base)):
             temp_char = str_base[i]
-            temp_Ascii = ord(temp_char)
-            result = temp_Ascii - 87 if temp_Ascii > 57 else temp_Ascii - 48
+            temp_ascii = ord(temp_char)
+            result = temp_ascii - 87 if temp_ascii > 57 else temp_ascii - 48
             temp_array.append(result)
-            i += 1
-        decode_res = temp_array[1]*36 + temp_array[1]
+        decode_res = temp_array[0]*36 + temp_array[1]
         return decode_res
 
     def decode_response(self, challenge, userresponse):
@@ -219,7 +209,7 @@ class GeetestLib(object):
         if len(userresponse) > 100:
             return 0
         shuzi = (1, 2, 5, 10, 50)
-        chongfu = []
+        chongfu = set()
         key = {}
         count = 0
         for i in challenge:
@@ -227,12 +217,13 @@ class GeetestLib(object):
                 continue
             else:
                 value = shuzi[count % 5]
-                chongfu.append(i)
+                chongfu.add(i)
                 count += 1
                 key.update({i: value})
         res = 0
         for i in userresponse:
             res += key.get(i, 0)
+        res = res - self.decode_rand_base(challenge)
         return res
 
     def random_num():
@@ -243,10 +234,3 @@ class GeetestLib(object):
         """
         rand_num = random.random()*100
         return rand_num
-
-
-
-
-
-
-
