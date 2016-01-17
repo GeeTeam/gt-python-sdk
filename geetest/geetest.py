@@ -1,99 +1,73 @@
 #!coding:utf8
-from hashlib import md5
 import string
 import urllib2
 import random
 import json
-# SDK_version = "2.0.0"
-# Python_version = 2.7.6
+from hashlib import md5
+from urllib import urlencode
+
+
+VERSION = "3.0.0dev1"
+
 
 class GeetestLib(object):
 
+    FN_CHALLENGE = "geetest_challenge"
+    FN_VALIDATE = "geetest_validate" 
+    FN_SECCODE = "geetest_seccode" 
+
+    SUCCESS_RES = "success" 
+    FAIL_RES = "fail" 
+
+    API_URL = "http://api.geetest.com" 
+    REGISTER_HANDLER = "/register.php"
+    VALIDATE_HANDLER = "/validate.php"
+
+
     def __init__(self, id, key):
         self.private_key = key                    #私钥
-        self.captcha_ID = id                      #公钥
-        self.sdk_version = "2.0.0"                #SDK版本
-        self.challenge = ""
-
-        self.base_url = "api.geetest.com"
-        self.api_url = "http://" + self.base_url  #HTTPS API URL
-        self.host = self.api_url
-        self.host_port = 80                       #API 接口
-
-        self.success_res = "success"              #验证返还成功结果
-        self.fail_res = "fail"                    #验证返还失败结果
-
-        self.fn_challenge = "geetest_challenge"   #二次验证表单数据challenge
-        self.fn_validate = "geetest_validate"     #二次验证表单数据validate
-        self.fn_seccode = "geetest_seccode"       ##二次验证表单数据seccode
+        self.captcha_id = id                      #公钥
+        self.sdk_version = VERSION              #SDK版本
 
     def pre_process(self):
         """
-        验证初始化预处理，包括register().
+        验证初始化预处理.
 
         :return Boolean:
         """
-        if self.register():
-            return True
+        status, challenge = self._register()
+
+    def _register(self):
+        challenge=self._register_challenge()
+        if len(challenge) == 32:
+            return 1, challenge
         else:
-            return False
+            return 0, self._make_fail_challenge()
 
-    def register(self):
-        """
-        验证初始化.
-
-        :return Boolean:
-        """
-        path = "/register.php"
-        host = self.host
-        if self.captcha_ID == None:
-            return False
-        else:
-            challenge=self.register_challenge()
-            if len(challenge) == 32:
-                self.challenge = challenge
-                return True
-            else:
-                return False
-
-    def fail_pre_process(self):
-        """
-        预处理失败后的返回格式串.
-
-        :return Json字符串:
-        """
+    def _make_fail_challenge(self):
         rnd1 = int(round(random.random()*100))
         rnd2 = int(round(random.random()*100))
         md5_str1 = self.md5_encode(str(rnd1))
         md5_str2 = self.md5_encode(str(rnd2))
         challenge = md5_str1 + md5_str2[0:2]
-        string_format = json.dumps({'success': 0, 'gt':self.captcha_ID ,'challenge': self.challenge})
+        return challenge
+
+    def _make_response_format(self, success=1, challenge=None):
+        if not challenge:
+            challenge = self._make_fail_challenge()
+        string_format = json.dumps({'success': success, 'gt':self.captcha_ID ,'challenge': challenge})
         return string_format
 
-    def success_pre_process(self):
-        """
-        预处理成功后的标准串
-
-        :return Json字符串:
-        """
-        string_format = json.dumps({'success': 1, 'gt':self.captcha_ID ,'challenge': self.challenge})
-        return string_format
-
-    def register_challenge(self):
-        """
-        challange获取url.
-
-        :return res_string:
-        """
-        api_reg = "http://api.geetest.com/register.php?"
-        reg_url = api_reg + "gt=%s"%self.captcha_ID
+    def _register_challenge(self):
+        register_url = "{api_url}{handler}?gt={captcha_ID}".format(
+            api_url=self.API_URL, handler=self.REGISTER_HANDLER, captcha_ID=self.captcha_id)
         try:
-            res_string = urllib2.urlopen(reg_url, timeout=2).read()
+            res_string = urllib2.urlopen(register_url, timeout=2).read()
         except:
             res_string = ""
         return res_string
 
-    def post_validate(self, challenge, validate, seccode):
+    def post_validate(self, status, challenge, validate, seccode):
         """
         validate二次验证.
 
@@ -102,38 +76,46 @@ class GeetestLib(object):
         :param seccode:
         :return result:
         """
-        apiserver = "http://api.geetest.com/validate.php"
-        if validate == self.md5_encode(self.private_key + 'geetest' + challenge):
-            query = 'seccode=' + seccode + "&sdk=python_" + self.sdk_version
-            backinfo = self.post_values(apiserver, query)
-            if backinfo == self.md5_encode(seccode):
-                return self.success_res
-            else:
-                return self.fail_res
-        return self.fail_res
+        if status:
+            return self.success_validate(challenge, validate, seccode)
+        else:
+            return self.failback_validate(challenge, validate, seccode)
 
-    def post_values(self, apiserver, data):
+    def success_validate(self, challenge, validate, seccode):
         """
-        向gt-server发起二次验证请求.
+        正常模式的二次验证方式
 
-        :param apiserver:
-        :param data:
-        :return backinfo:
+        :param challenge:
+        :param validate:
+        :param seccode:
+        :return result:
         """
+        if not self._check_para(challenge, validate, seccode):
+            return self.FAIL_RES
+        if not self._check_result(challenge, validate):
+            return self.FAIL_RES
+        validate_url =  "{api_url}{handler}".format(
+            api_url=self.API_URL, handler=self.VALIDATE_HANDLER)
+        query = {
+            "seccode": seccode,
+            "sdk": "python_%s" % self.sdk_version
+        }
+        query = urlencode(query)
+        backinfo = self._post_values(validate_url, query)
+        if backinfo == self.md5_encode(seccode):
+            return self.SUCCESS_RES
+        else:
+            return self.FAIL_RES
+
+
+    def _post_values(self, apiserver, data):
         req = urllib2.Request(apiserver)
         opener = urllib2.build_opener(urllib2.HTTPCookieProcessor())
         response = opener.open(req, data)
         backinfo = response.read()
         return backinfo
 
-    def check_result(self, origin, validate):
-        """
-        二次验证先验判断，判断validate是否与privatekey,challenge 吻合
-
-        :param origin:
-        :param validate:
-        :returns Boolean:
-        """
+    def _check_result(self, origin, validate):
         encodeStr = self.md5_encode(self.private_key + "geetest" + origin)
         if validate == encodeStr:
             return True
@@ -142,7 +124,7 @@ class GeetestLib(object):
 
     def failback_validate(self, challenge, validate, seccode):
         """
-        failback模式的验证方式,验证结果
+        failback模式的二次验证方式
 
         :param challenge:
         :param validate:
@@ -165,16 +147,8 @@ class GeetestLib(object):
             self.challenge = md5Str
         return validate_result
 
-    def request_is_legal(self, challenge, validate, seccode):
-        """
-        判断请求是否合法
-
-        :return Boolean:
-        """
-        if bool(challenge.strip()) and bool(validate.strip()) and  bool(seccode.strip()):
-            return True
-        else :
-            return False
+    def _check_para(self, challenge, validate, seccode):
+        return bool(challenge.strip()) and bool(validate.strip()) and  bool(seccode.strip())
 
     def validate_fail_image(self, ans, full_bg_index , img_grp_index):
         """
@@ -204,25 +178,6 @@ class GeetestLib(object):
         else:
             return self.fail_res
 
-    def set_gtserver_session(self, set_func, status_code):
-        """
-       设置gt-server状态值session,包括status_code和challenge
-
-       :param set_func:
-       :param status_code:
-        """
-        set_func('gt_server_status', status_code)
-
-    def get_gtserver_session(self, get_func):
-        """
-        获取gt-server状态值session的status_code
-
-        :param get_func:
-        :return status_code:
-        """
-        status_code = int(get_func('gt_server_status'))
-        return status_code
-
     def md5_encode(self, values):
         """
         md5编码
@@ -230,8 +185,7 @@ class GeetestLib(object):
         :param values:
         :return md5:
         """
-        import hashlib
-        m = hashlib.md5()
+        m = md5()
         m.update(values)
         return m.hexdigest()
 
