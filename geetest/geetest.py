@@ -1,5 +1,4 @@
 #!coding:utf8
-import string
 import urllib2
 import random
 import json
@@ -7,7 +6,7 @@ from hashlib import md5
 from urllib import urlencode
 
 
-VERSION = "3.0.0"
+VERSION = "3.0.1"
 
 
 class GeetestLib(object):
@@ -25,11 +24,10 @@ class GeetestLib(object):
     REGISTER_HANDLER = "/register.php"
     VALIDATE_HANDLER = "/validate.php"
 
-
     def __init__(self, captcha_id, private_key):
-        self.private_key = private_key                    #私钥
-        self.captcha_id = captcha_id                      #公钥
-        self.sdk_version = VERSION              #SDK版本
+        self.private_key = private_key
+        self.captcha_id = captcha_id
+        self.sdk_version = VERSION
 
     def pre_process(self):
         """
@@ -56,7 +54,8 @@ class GeetestLib(object):
     def _make_response_format(self, success=1, challenge=None):
         if not challenge:
             challenge = self._make_fail_challenge()
-        string_format = json.dumps({'success': success, 'gt':self.captcha_id ,'challenge': challenge})
+        string_format = json.dumps(
+            {'success': success, 'gt':self.captcha_id ,'challenge': challenge})
         return string_format
 
     def _register_challenge(self):
@@ -85,7 +84,7 @@ class GeetestLib(object):
             return self.FAIL_RES
         if not self._check_result(challenge, validate):
             return self.FAIL_RES
-        validate_url =  "{api_url}{handler}".format(
+        validate_url = "{api_url}{handler}".format(
             api_url=self.API_URL, handler=self.VALIDATE_HANDLER)
         query = {
             "seccode": seccode,
@@ -97,7 +96,6 @@ class GeetestLib(object):
             return self.SUCCESS_RES
         else:
             return self.FAIL_RES
-
 
     def _post_values(self, apiserver, data):
         req = urllib2.Request(apiserver)
@@ -121,16 +119,17 @@ class GeetestLib(object):
             return self.FAIL_RES
         validate_str = validate.split('_')
         encode_ans = validate_str[0]
-        encode_fbii = validate_str[1]      #_fbii : Full Bg Img Index
+        encode_fbii = validate_str[1]
         encode_igi = validate_str[2]
-        decode_ans = self.decode_response(challenge, encode_ans)
-        decode_fbii = self.decode_response(challenge, encode_fbii)
-        decode_igi = self.decode_response(challenge, encode_igi)  #_igi : Img Grp Index
-        validate_result = self._validate_fail_image(decode_ans, decode_fbii, decode_igi)
+        decode_ans = self._decode_response(challenge, encode_ans)
+        decode_fbii = self._decode_response(challenge, encode_fbii)
+        decode_igi = self._decode_response(challenge, encode_igi)
+        validate_result = self._validate_fail_image(
+            decode_ans, decode_fbii, decode_igi)
         return validate_result
 
     def _check_para(self, challenge, validate, seccode):
-        return bool(challenge.strip()) and bool(validate.strip()) and  bool(seccode.strip())
+        return (bool(challenge.strip()) and bool(validate.strip()) and  bool(seccode.strip()))
 
     def _validate_fail_image(self, ans, full_bg_index , img_grp_index):
         thread = 3
