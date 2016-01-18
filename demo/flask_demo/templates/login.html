@@ -1,7 +1,7 @@
 <html>
 <head>
 	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-	<title>极验行为式验证 flask 类网站安装测试页面</title>
+	<title>极验行为式验证 Flask 类网站安装测试页面</title>
 	<script src="http://libs.baidu.com/jquery/1.9.0/jquery.js"></script>
 </head>
 <body>
@@ -17,7 +17,7 @@
 		}
 		.box{
 			width:300px;
-			margin: 30px auto; 
+			margin: 30px auto;
 		}
 		.header{
 			margin: 80px auto 30px auto;
@@ -36,8 +36,8 @@
 			border: 1px solid #FFFFF0;
 			background-color: #31C552;
 			border-radius: 4px;
-			font-size: 14px;	
-			color: #FFFFF0;	
+			font-size: 14px;
+			color: #FFFFF0;
 		}
 	</style>
 
@@ -63,12 +63,12 @@
 					<button id="submit-button">提交</button>
 				</div>
 <script type="text/javascript">
-				
+
 
 				function geetest_ajax_results() {
 					//TODO, not necessory a geetest ajax demo,
 					$.ajax({
-						url : "todo yourself",//todo:set the servelet of your own
+						url : "",//todo:set the servelet of your own
 						type : "post",
 						data : gt_captcha_obj.getValidate(),
 						success : function(sdk_result) {
@@ -76,8 +76,8 @@
 						}
 					});
 				}
-				
-				
+
+
 					var gtFailbackFrontInitial = function(result) {
 						var s = document.createElement('script');
 						s.id = 'gt_lib';
@@ -85,7 +85,7 @@
 						s.charset = 'UTF-8';
 						s.type = 'text/javascript';
 						document.getElementsByTagName('head')[0].appendChild(s);
-						var 
+						var
 					loaded = false;
 						s.onload = s.onreadystatechange = function() {
 							if (!loaded
@@ -111,16 +111,16 @@
 
 						gt_captcha_obj.appendTo("#div_id_embed");
 
-						//Ajax request demo,if you use submit form ,then ignore it 
+						//Ajax request demo,if you use submit form ,then ignore it
 						gt_captcha_obj.onSuccess(function() {
 							geetest_ajax_results()
 						});
 					}
 
-					//s = document.createElement('script');
-					//s.src = 'http://api.geetest.com/get.php?callback=gtcallback';
-					//$("#div_geetest_lib").append(s);
-					
+					s = document.createElement('script');
+					s.src = 'http://api.geetest.com/get.php?callback=gtcallback';
+					$("#div_geetest_lib").append(s);
+
 					var gtcallback =( function() {
 						var status = 0, result, apiFail;
 						return function(r) {
@@ -142,7 +142,7 @@
 							}
 						}
 					})()
-					
+
 					$.ajax({
 								url : "/getcaptcha",
 								type : "get",
@@ -152,7 +152,7 @@
 								}
 							})
 				</script>
-				</div>	
+				</div>
 			</form>
 		</div>
 	</div>

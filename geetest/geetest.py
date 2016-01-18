@@ -7,21 +7,21 @@ from hashlib import md5
 from urllib import urlencode
 
 
-VERSION = "3.0.0dev1"
+VERSION = "3.0.0"
 
 
 class GeetestLib(object):
 
     FN_CHALLENGE = "geetest_challenge"
-    FN_VALIDATE = "geetest_validate" 
-    FN_SECCODE = "geetest_seccode" 
+    FN_VALIDATE = "geetest_validate"
+    FN_SECCODE = "geetest_seccode"
 
     GT_STATUS_SESSION_KEY = "gt_server_status"
 
-    SUCCESS_RES = "success" 
-    FAIL_RES = "fail" 
+    SUCCESS_RES = "success"
+    FAIL_RES = "fail"
 
-    API_URL = "http://api.geetest.com" 
+    API_URL = "http://api.geetest.com"
     REGISTER_HANDLER = "/register.php"
     VALIDATE_HANDLER = "/validate.php"
 
@@ -34,8 +34,6 @@ class GeetestLib(object):
     def pre_process(self):
         """
         验证初始化预处理.
-
-        :return Boolean:
         """
         status, challenge = self._register()
         return status, self._make_response_format(status, challenge)
@@ -50,8 +48,8 @@ class GeetestLib(object):
     def _make_fail_challenge(self):
         rnd1 = random.randint(0, 99)
         rnd2 = random.randint(0, 99)
-        md5_str1 = self.md5_encode(str(rnd1))
-        md5_str2 = self.md5_encode(str(rnd2))
+        md5_str1 = self._md5_encode(str(rnd1))
+        md5_str2 = self._md5_encode(str(rnd2))
         challenge = md5_str1 + md5_str2[0:2]
         return challenge
 
@@ -72,12 +70,7 @@ class GeetestLib(object):
 
     def validate(self, status, challenge, validate, seccode):
         """
-        validate二次验证.
-
-        :param challenge:
-        :param validate:
-        :param seccode:
-        :return result:
+        validate二次验证. `validate` 会根据 `status` 自动判断调用 `success_validat` 或者 `failback_validate`
         """
         if status:
             return self.success_validate(challenge, validate, seccode)
@@ -86,12 +79,7 @@ class GeetestLib(object):
 
     def success_validate(self, challenge, validate, seccode):
         """
-        正常模式的二次验证方式
-
-        :param challenge:
-        :param validate:
-        :param seccode:
-        :return result:
+        正常模式的二次验证方式.向geetest server 请求验证结果.
         """
         if not self._check_para(challenge, validate, seccode):
             return self.FAIL_RES
@@ -105,7 +93,7 @@ class GeetestLib(object):
         }
         query = urlencode(query)
         backinfo = self._post_values(validate_url, query)
-        if backinfo == self.md5_encode(seccode):
+        if backinfo == self._md5_encode(seccode):
             return self.SUCCESS_RES
         else:
             return self.FAIL_RES
@@ -119,7 +107,7 @@ class GeetestLib(object):
         return backinfo
 
     def _check_result(self, origin, validate):
-        encodeStr = self.md5_encode(self.private_key + "geetest" + origin)
+        encodeStr = self._md5_encode(self.private_key + "geetest" + origin)
         if validate == encodeStr:
             return True
         else:
@@ -127,12 +115,7 @@ class GeetestLib(object):
 
     def failback_validate(self, challenge, validate, seccode):
         """
-        failback模式的二次验证方式
-
-        :param challenge:
-        :param validate:
-        :param seccode:
-        :return result:
+        failback模式的二次验证方式.在本地对轨迹进行简单的判断返回验证结果.
         """
         if not self._check_para(challenge, validate, seccode):
             return self.FAIL_RES
@@ -151,8 +134,8 @@ class GeetestLib(object):
 
     def _validate_fail_image(self, ans, full_bg_index , img_grp_index):
         thread = 3
-        full_bg_name = str(self.md5_encode(str(full_bg_index)))[0:10]
-        bg_name = str(self.md5_encode(str(img_grp_index)))[10:20]
+        full_bg_name = str(self._md5_encode(str(full_bg_index)))[0:10]
+        bg_name = str(self._md5_encode(str(img_grp_index)))[10:20]
         answer_decode = ""
         for i in range(0,9):
             if i % 2 == 0:
@@ -169,24 +152,12 @@ class GeetestLib(object):
         else:
             return self.FAIL_RES
 
-    def md5_encode(self, values):
-        """
-        md5编码
-
-        :param values:
-        :return md5:
-        """
+    def _md5_encode(self, values):
         m = md5()
         m.update(values)
         return m.hexdigest()
 
-    def decode_rand_base(self, challenge):
-        """
-        输入的两位的随机数字,解码出偏移量
-
-        :param challenge:
-        :return decode_result:
-        """
+    def _decode_rand_base(self, challenge):
         str_base = challenge[32:]
         i = 0
         temp_array = []
@@ -198,14 +169,7 @@ class GeetestLib(object):
         decode_res = temp_array[0]*36 + temp_array[1]
         return decode_res
 
-    def decode_response(self, challenge, userresponse):
-        """
-        response解码
-
-        :param challenge:
-        :param userresponse:
-        :return decode_result:
-        """
+    def _decode_response(self, challenge, userresponse):
         if len(userresponse) > 100:
             return 0
         shuzi = (1, 2, 5, 10, 50)
@@ -223,14 +187,5 @@ class GeetestLib(object):
         res = 0
         for i in userresponse:
             res += key.get(i, 0)
-        res = res - self.decode_rand_base(challenge)
+        res = res - self._decode_rand_base(challenge)
         return res
-
-    def random_num():
-        """
-        随机数生成
-
-        :return Float:
-        """
-        rand_num = random.random()*100
-        return rand_num

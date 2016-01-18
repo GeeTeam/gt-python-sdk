@@ -2,40 +2,108 @@ Gt Python SDK
 ===============
 
 极验验证的Python SDK目前提供基于django, flask, tornado框架的DEMO
-本项目提供的Demo的前端实现方法均是面向PC端的。 如果需要移动端的canvas功能，请参考canvas的 `前端文档 <http://www.geetest.com/install/>`_.
+本项目是面向服务器端的,客户端相关开发请参考我们的 `前端文档 <http://www.geetest.com/install/>`_.
 
 开发环境
-_______________
+----------------
 
  - Python (推荐2.7.0以上版本）
  - django, flask, tornado框架
 
 快速开始
-_______________
+---------------
 
-1. 从 `Github <https://github.com/GeeTeam/gt-python-sdk/>`__ 上Clone代码:
+下面使用示例代码的均以flask框架为例.
+
+1. 获取代码
+
+从 `Github <https://github.com/GeeTeam/gt-python-sdk/>`__ 上Clone代码:
 
 .. code-block:: bash
 
     $ git clone https://github.com/GeeTeam/gt-python-sdk.git
 
-2. django demo运行：进入django_demo文件夹，运行：
+2. 安装GeetestSDK
 
 .. code-block:: bash
 
-    $ python start.py runserver 0.0.0.0:8000  
+    $ sudo python setup.py install
+
+3. 初始化验证
+
+
+在调用GeetestLib前请自行设定公钥和私钥：
+
+.. code-block :: python
+
+  captach_id = "你的公钥"
+  private_key = "你的私钥"
+
+根据自己的私钥出初始化验证
+
+.. code-block :: python
+
+  @app.route('/getcaptcha', methods=["GET"])
+  def get_captcha():
+      gt = GeetestLib(captach_id, private_key)
+      status, response_str = gt.pre_process()
+      session[gt.GT_STATUS_SESSION_KEY] = gt
+      return response_str
+
+上述代码是一般验证初始化的代码,因为现在我们服务提供完备的服务宕机方案,所以推荐直接使用我们的宕机方案,也可以换成你们自己的方案,根据返回的`status` 自行处理.
+
+4. 二次验证
+
+.. code-block :: python
+
+  @app.route('/validate', methods=["POST"])
+  def validate_capthca():
+      gt = GeetestLib(captcha_id, private_key)
+      status = session[gt.GT_STATUS_SESSION_KEY]
+      challenge = request.form[gt.FN_CHALLENGE]
+      validate = request.form[gt.FN_VALIDATE]
+      seccode = request.form[gt.FN_SECCODE]
+      gt = GeetestLib(captcha_id, private_key)
+      result = gt.validate(status, challenge, validate, seccode)
+      return result
+
+如果不想采用极验提供的failback方案,你可以自己处理，代码如下
+
+.. code-block :: python
+
+  @app.route('/validate', methods=["POST"])
+  def validate_capthca():
+      status = session[GeetestLib.GT_STATUS_SESSION_KEY]
+      if status:
+          gt = GeetestLib(captcha_id, private_key)
+          challenge = request.form[gt.FN_CHALLENGE]
+          validate = request.form[gt.FN_VALIDATE]
+          seccode = request.form[gt.FN_SECCODE]
+          result = gt.success_validat(challenge, validate, seccode)
+      else:
+          #你们自己的验证方法
+      return result
+
+运行demo
+---------------------
+
+1. django demo运行：进入django_demo文件夹，运行：
+
+.. code-block:: bash
+
+    $ python manage.py runserver 0.0.0.0:8000
 
 在浏览器中访问http://localhost:8000即可看到Demo界面
 
-3. flask demo运行：进入flask_demo文件夹，运行：
+2. flask demo运行：进入flask_demo文件夹，运行：
 
 .. code-block:: bash
 
     $ python start.py
 
 在浏览器中访问http://localhost:5000即可看到Demo界面
- 
-4. tornado demo运行：进入tornado_demo文件夹，运行:
+
+3. tornado demo运行：进入tornado_demo文件夹，运行:
 
 .. code-block:: bash
 
@@ -44,65 +112,15 @@ _______________
 在浏览器中访问http://localhost:8088即可看到Demo界面
 
 
-SDK 使用说明
-_________________
-
-以django为例
-
-1. 核心SDK库: ../python_sdk/geetest.py
-
-2. api文档:  ../doc/api.rst
-
-3. 公钥和私钥初始化：查看../demo/django_demo/app/views.py
-
-.. code-block:: python
-
- captcha_id ="你的公钥"
- private_key = "你的私钥"
-
-4. 请求验证码时使用register_challenge()获取challenge
-
-.. code-block:: python
-
- gt = geetest.GeetestLib(captcha_id, private_key)
- challenge = gt.register_challenge()
-
-5. 预处理和session控制
-
-.. code-block:: python
-
- gt =  GeetestLib(captcha_id, private_key)
- if gt.pre_process():
-     res_str = gt.success_pre_process()
-     gt.set_gtserver_session(session.__setitem__, 1)
- else:                   #宕机情况下提供failback方案，可自行更换
-     res_str = gt.fail_pre_process()
-     gt.set_gtserver_session(session.__setitem__, 0)
- return res_str
-
-6. validate验证：
-
-.. code-block:: python
-
- if request.method == "POST":
-     challenge = request.POST.get('geetest_challenge', '')
-     validate = request.POST.get('geetest_validate', '')
-     seccode = request.POST.get('geetest_seccode', '')
-     gt = geetest.GeetestLib(captcha_id, private_key)
-     gt_challenge = gt.get_gtserver_challenge(request.session.__getitem__)
-     gt_server_status = gt.get_gtserver_session(request.session.__getitem__)
-     if gt_server_status == 1:
-         result = gt.post_validate(challenge, validate, seccode)
-     else:
-         result = gt.failback_validate(challenge, validate, seccode)
-     return HttpResponse(result)
- return HttpResponse("error")
-
 发布日志
-_______________
+-----------------
++[3.0.0]
+ - 去除SDK对Session操作， 现在Session部分由开发者自己处理
+ - 简易化初始化过程.
+ - 修复failback模式BUG
+
 +[2.0.2]
  - 添加通过session控制的challenge检查
- - Date : 2015.12.30
+
 +[2.0.1]
  - SDK库和django和flask demo重制
- - Date : 2015.12.24        

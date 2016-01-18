@@ -2,10 +2,8 @@
 import tornado.ioloop
 import tornado.web
 import tornado.gen
-import sdk.geetest as geetest
-
-
-BASE_URL = "api.geetest.com/get.php?gt="
+from torndsession.sessionhandler import SessionBaseHandler
+from geetest import GeetestLib
 
 captcha_id = "a40fd3b0d712165c5d13e6f747e948d4"
 private_key = "0f1a37e33c9ed10dd2e133fe2ae9c459"
@@ -16,35 +14,30 @@ product = "embed"
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
-        gt = geetest.GeetestLib(captcha_id, private_key)
-        url = ""
-        httpsurl = ""
-        try:
-            challenge = gt.register_challenge()
-        except:
-            challenge = ""
-        if len(challenge) == 32:
-            url = "http://%s%s&challenge=%s&product=%s" % (BASE_URL, captcha_id, challenge, product)
-            httpsurl = "https://%s%s&challenge=%s&product=%s" % (BASE_URL, captcha_id, challenge, product)
-        self.render("static/login.html", url=url)
+        self.render("static/login.html",)
 
+class GetCaptchaHandler(SessionBaseHandler):
+    def get(self):
+        gt = GeetestLib(captcha_id, private_key)
+        status, response_str = gt.pre_process()
+        self.session[gt.GT_STATUS_SESSION_KEY] = status
+        self.write(response_str)
+
+class ValidateHandler(SessionBaseHandler):
     def post(self):
-        username = self.get_argument("email")
-        password = self.get_argument("password")
-        challenge = self.get_argument("geetest_challenge")
-        validate = self.get_argument("geetest_validate")
-        seccode = self.get_argument("geetest_seccode")
-        #print challenge
-        #print seccode
-        # print validate
-        gt = geetest.GeetestLib(captcha_id, private_key)
-        result = gt.post_validate(challenge, validate, seccode)
-        print result
+        gt = GeetestLib(captcha_id, private_key)
+        challenge = self.get_argument(gt.FN_CHALLENGE, "")
+        validate = self.get_argument(gt.FN_VALIDATE, "")
+        seccode = self.get_argument(gt.FN_SECCODE, "")
+        status = self.session[gt.GT_STATUS_SESSION_KEY]
+        result = gt.validate(status, challenge, validate, seccode)
         self.write(result)
 
 if __name__ == "__main__":
     app = tornado.web.Application([
                                       (r"/", MainHandler),
+                                      (r"/getcaptcha", GetCaptchaHandler),
+                                      (r"/validate", ValidateHandler)
                                   ], debug=True)
 
     app.listen(8088)
