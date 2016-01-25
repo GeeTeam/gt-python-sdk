@@ -6,7 +6,7 @@ from hashlib import md5
 from urllib import urlencode
 
 
-VERSION = "3.0.1"
+VERSION = "3.1.0dev1"
 
 
 class GeetestLib(object):
@@ -39,6 +39,7 @@ class GeetestLib(object):
     def _register(self):
         challenge = self._register_challenge()
         if len(challenge) == 32:
+            challenge = self._md5_encode("%s%s" % (challenge, self.private_key))
             return 1, challenge
         else:
             return 0, self._make_fail_challenge()
