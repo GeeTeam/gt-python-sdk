@@ -6,7 +6,7 @@ from hashlib import md5
 from urllib import urlencode
 
 
-VERSION = "3.1.0dev1"
+VERSION = "3.1.0"
 
 
 class GeetestLib(object):
