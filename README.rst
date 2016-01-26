@@ -51,7 +51,6 @@ Gt Python SDK
       response_str = gt.get_response_str()
       return response_str
 
-上述代码是一般验证初始化的代码,因为现在我们服务提供完备的服务宕机方案,所以推荐直接使用我们的宕机方案,也可以换成你们自己的方案,根据返回的 `status` 前端自行处理.
 
 4. 二次验证
 
@@ -102,7 +101,7 @@ Gt Python SDK
 
 发布日志
 -----------------
-+ 3.2.0
++ 3.1.1
 
  - 统一接口
 
