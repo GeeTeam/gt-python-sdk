@@ -6,7 +6,7 @@ from hashlib import md5
 from urllib import urlencode
 
 
-VERSION = "3.1.0"
+VERSION = "3.1.1"
 
 
 class GeetestLib(object):
@@ -17,9 +17,6 @@ class GeetestLib(object):
 
     GT_STATUS_SESSION_KEY = "gt_server_status"
 
-    SUCCESS_RES = "success"
-    FAIL_RES = "fail"
-
     API_URL = "http://api.geetest.com"
     REGISTER_HANDLER = "/register.php"
     VALIDATE_HANDLER = "/validate.php"
@@ -28,13 +25,15 @@ class GeetestLib(object):
         self.private_key = private_key
         self.captcha_id = captcha_id
         self.sdk_version = VERSION
+        self._response_str = ""
 
     def pre_process(self):
         """
         验证初始化预处理.
         """
         status, challenge = self._register()
-        return status, self._make_response_format(status, challenge)
+        self._response_str = self._make_response_format(status, challenge)
+        return status
 
     def _register(self):
         challenge = self._register_challenge()
@@ -43,6 +42,9 @@ class GeetestLib(object):
             return 1, challenge
         else:
             return 0, self._make_fail_challenge()
+
+    def get_response_str(self):
+        return self._response_str
 
     def _make_fail_challenge(self):
         rnd1 = random.randint(0, 99)
@@ -68,23 +70,16 @@ class GeetestLib(object):
             res_string = ""
         return res_string
 
-    def validate(self, status, challenge, validate, seccode):
-        """
-        validate二次验证. `validate` 会根据 `status` 自动判断调用 `success_validat` 或者 `failback_validate`
-        """
-        if status:
-            return self.success_validate(challenge, validate, seccode)
-        else:
-            return self.failback_validate(challenge, validate, seccode)
+
 
     def success_validate(self, challenge, validate, seccode):
         """
         正常模式的二次验证方式.向geetest server 请求验证结果.
         """
         if not self._check_para(challenge, validate, seccode):
-            return self.FAIL_RES
+            return 0
         if not self._check_result(challenge, validate):
-            return self.FAIL_RES
+            return 0
         validate_url = "{api_url}{handler}".format(
             api_url=self.API_URL, handler=self.VALIDATE_HANDLER)
         query = {
@@ -94,9 +89,9 @@ class GeetestLib(object):
         query = urlencode(query)
         backinfo = self._post_values(validate_url, query)
         if backinfo == self._md5_encode(seccode):
-            return self.SUCCESS_RES
+            return 1
         else:
-            return self.FAIL_RES
+            return 0
 
     def _post_values(self, apiserver, data):
         req = urllib2.Request(apiserver)
@@ -117,7 +112,7 @@ class GeetestLib(object):
         failback模式的二次验证方式.在本地对轨迹进行简单的判断返回验证结果.
         """
         if not self._check_para(challenge, validate, seccode):
-            return self.FAIL_RES
+            return 0
         validate_str = validate.split('_')
         encode_ans = validate_str[0]
         encode_fbii = validate_str[1]
@@ -148,9 +143,9 @@ class GeetestLib(object):
         if result < 40:
             result = 40
         if abs(ans - result) < thread:
-            return self.SUCCESS_RES
+            return 1
         else:
-            return self.FAIL_RES
+            return 0
 
     def _md5_encode(self, values):
         m = md5()

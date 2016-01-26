@@ -19,8 +19,9 @@ class MainHandler(tornado.web.RequestHandler):
 class GetCaptchaHandler(SessionBaseHandler):
     def get(self):
         gt = GeetestLib(captcha_id, private_key)
-        status, response_str = gt.pre_process()
+        status= gt.pre_process()
         self.session[gt.GT_STATUS_SESSION_KEY] = status
+        response_str = gt.get_response_str()
         self.write(response_str)
 
 class ValidateHandler(SessionBaseHandler):
@@ -30,7 +31,11 @@ class ValidateHandler(SessionBaseHandler):
         validate = self.get_argument(gt.FN_VALIDATE, "")
         seccode = self.get_argument(gt.FN_SECCODE, "")
         status = self.session[gt.GT_STATUS_SESSION_KEY]
-        result = gt.validate(status, challenge, validate, seccode)
+        if status:
+            result = gt.success_validate(challenge, validate, seccode)
+        else:
+            result = gt.fail_validate(challenge, validate, seccode)
+        result = "sucess" if result else "fail"
         self.write(result)
 
 if __name__ == "__main__":

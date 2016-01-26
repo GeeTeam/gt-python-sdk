@@ -1,8 +1,8 @@
 Gt Python SDK
 ===============
-
+使用 3.1 之前版本SDK的用户如果想更新到3.1以及以后版本请先联系极验客服,因为为了兼容老用户,新的特性需要修改验证设置
 极验验证的Python SDK目前提供基于django, flask, tornado框架的DEMO
-本项目是面向服务器端的,客户端相关开发请参考我们的 `前端文档 <http://www.geetest.com/install/>`_.
+本项目是面向服务器端的，具体使用可以参考我们的 `文档 <http://www.geetest.com/install/sections/idx-server-sdk.html>`_ ,客户端相关开发请参考我们的 `前端文档 <http://www.geetest.com/install/>`_.
 
 开发环境
 ----------------
@@ -45,9 +45,10 @@ Gt Python SDK
 
   @app.route('/getcaptcha', methods=["GET"])
   def get_captcha():
-      gt = GeetestLib(captach_id, private_key)
-      status, response_str = gt.pre_process()
-      session[gt.GT_STATUS_SESSION_KEY] = gt
+      gt =  GeetestLib(captcha_id, private_key)
+      status = gt.pre_process()
+      session[gt.GT_STATUS_SESSION_KEY] = status
+      response_str = gt.get_response_str()
       return response_str
 
 上述代码是一般验证初始化的代码,因为现在我们服务提供完备的服务宕机方案,所以推荐直接使用我们的宕机方案,也可以换成你们自己的方案,根据返回的 `status` 前端自行处理.
@@ -63,26 +64,13 @@ Gt Python SDK
       challenge = request.form[gt.FN_CHALLENGE]
       validate = request.form[gt.FN_VALIDATE]
       seccode = request.form[gt.FN_SECCODE]
-      gt = GeetestLib(captcha_id, private_key)
-      result = gt.validate(status, challenge, validate, seccode)
-      return result
-
-如果不想采用极验提供的failback方案,你可以自己处理，代码如下
-
-.. code-block :: python
-
-  @app.route('/validate', methods=["POST"])
-  def validate_capthca():
-      status = session[GeetestLib.GT_STATUS_SESSION_KEY]
       if status:
-          gt = GeetestLib(captcha_id, private_key)
-          challenge = request.form[gt.FN_CHALLENGE]
-          validate = request.form[gt.FN_VALIDATE]
-          seccode = request.form[gt.FN_SECCODE]
-          result = gt.success_validat(challenge, validate, seccode)
+          result = gt.success_validate(challenge, validate, seccode)
       else:
-          #你们自己的验证方法
+          result = gt.fail_validate(challenge, validate, seccode)
+      result = "sucess" if result else "fail"
       return result
+
 
 运行demo
 ---------------------
@@ -114,6 +102,18 @@ Gt Python SDK
 
 发布日志
 -----------------
++ 3.2.0
+
+ - 统一接口
+
++ 3.1.0
+
+ - 添加challenge加密特性，使验证更安全， 老版本更新请先联系管理员
+
++ 3.0.1
+
+  - 修复failback情况下 无法正确解码答案的错误
+
 + 3.0.0
 
  - 去除SDK对Session操作， 现在Session部分由开发者自己处理

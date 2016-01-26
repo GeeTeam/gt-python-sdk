@@ -3,21 +3,17 @@ from django.shortcuts import render_to_response, RequestContext
 from django.http import HttpResponse
 from geetest import GeetestLib
 
-BASE_URL = "api.geetest.com/get.php?gt="
 captcha_id = "a40fd3b0d712165c5d13e6f747e948d4"
 private_key = "0f1a37e33c9ed10dd2e133fe2ae9c459"
-product = "embed"
-
-# 弹出式
-# product = "popup&popupbtnid=submit-button"
 
 def home(request):
     return render_to_response("index.html", context_instance=RequestContext(request))
 
 def getcaptcha(request):
     gt = GeetestLib(captcha_id, private_key)
-    status, response_str = gt.pre_process()
+    status = gt.pre_process()
     request.session[gt.GT_STATUS_SESSION_KEY] = status
+    response_str = gt.get_response_str()
     return HttpResponse(response_str)
 
 def validate(request):
@@ -27,6 +23,10 @@ def validate(request):
         validate = request.POST.get(gt.FN_VALIDATE, '')
         seccode = request.POST.get(gt.FN_SECCODE, '')
         status = request.session[gt.GT_STATUS_SESSION_KEY]
-        result = gt.validate(status, challenge, validate, seccode)
+        if status:
+            result = gt.success_validate(challenge, validate, seccode)
+        else:
+            result = gt.fail_validate(challenge, validate, seccode)
+        result = "sucess" if result else "fail"
         return HttpResponse(result)
     return HttpResponse("error")

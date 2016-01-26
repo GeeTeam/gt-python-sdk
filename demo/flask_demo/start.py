@@ -12,8 +12,9 @@ app.config.update(
 @app.route('/getcaptcha', methods=["GET"])
 def get_captcha():
     gt =  GeetestLib(captcha_id, private_key)
-    status, response_str = gt.pre_process()
+    status = gt.pre_process()
     session[gt.GT_STATUS_SESSION_KEY] = status
+    response_str = gt.get_response_str()
     return response_str
 
 @app.route('/validate', methods=["POST"])
@@ -23,8 +24,11 @@ def validate_capthca():
     challenge = request.form[gt.FN_CHALLENGE]
     validate = request.form[gt.FN_VALIDATE]
     seccode = request.form[gt.FN_SECCODE]
-    gt = GeetestLib(captcha_id, private_key)
-    result = gt.validate(status, challenge, validate, seccode)
+    if status:
+        result = gt.success_validate(challenge, validate, seccode)
+    else:
+        result = gt.fail_validate(challenge, validate, seccode)
+    result = "sucess" if result else "fail"
     return result
 
 @app.route('/')
