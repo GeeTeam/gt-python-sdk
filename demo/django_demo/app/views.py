@@ -3,8 +3,8 @@ from django.shortcuts import render_to_response, RequestContext
 from django.http import HttpResponse
 from geetest import GeetestLib
 
-captcha_id = "a40fd3b0d712165c5d13e6f747e948d4"
-private_key = "0f1a37e33c9ed10dd2e133fe2ae9c459"
+captcha_id = "b46d1900d0a894591916ea94ea91bd2c"
+private_key = "36fc3fe98530eea08dfc6ce76e3d24c4"
 
 def home(request):
     return render_to_response("index.html", context_instance=RequestContext(request))
