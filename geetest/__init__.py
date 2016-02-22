@@ -1,1 +1,1 @@
-from geetest import GeetestLib, VERSION
+from .geetest import GeetestLib, VERSION

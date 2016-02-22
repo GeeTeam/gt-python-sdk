@@ -27,7 +27,7 @@ def validate_capthca():
     if status:
         result = gt.success_validate(challenge, validate, seccode)
     else:
-        result = gt.fail_validate(challenge, validate, seccode)
+        result = gt.failback_validate(challenge, validate, seccode)
     result = "sucess" if result else "fail"
     return result
 

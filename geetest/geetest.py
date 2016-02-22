@@ -1,12 +1,15 @@
 #!coding:utf8
-import urllib2
+import sys
 import random
 import json
+import requests
 from hashlib import md5
-from urllib import urlencode
 
 
-VERSION = "3.1.1"
+if sys.version_info >= (3,):
+    xrange = range    
+
+VERSION = "3.1.2"
 
 
 class GeetestLib(object):
@@ -38,7 +41,7 @@ class GeetestLib(object):
     def _register(self):
         challenge = self._register_challenge()
         if len(challenge) == 32:
-            challenge = self._md5_encode("%s%s" % (challenge, self.private_key))
+            challenge = self._md5_encode("".join([challenge, self.private_key]))
             return 1, challenge
         else:
             return 0, self._make_fail_challenge()
@@ -65,7 +68,11 @@ class GeetestLib(object):
         register_url = "{api_url}{handler}?gt={captcha_ID}".format(
             api_url=self.API_URL, handler=self.REGISTER_HANDLER, captcha_ID=self.captcha_id)
         try:
-            res_string = urllib2.urlopen(register_url, timeout=2).read()
+            response = requests.get(register_url, timeout=2)
+            if response.status_code == requests.codes.ok:
+                res_string = response.text
+            else:
+                res_string = ""
         except:
             res_string = ""
         return res_string
@@ -84,9 +91,8 @@ class GeetestLib(object):
             api_url=self.API_URL, handler=self.VALIDATE_HANDLER)
         query = {
             "seccode": seccode,
-            "sdk": "python_%s" % self.sdk_version
+            "sdk": ''.join( ["python_",self.sdk_version])
         }
-        query = urlencode(query)
         backinfo = self._post_values(validate_url, query)
         if backinfo == self._md5_encode(seccode):
             return 1
@@ -94,11 +100,8 @@ class GeetestLib(object):
             return 0
 
     def _post_values(self, apiserver, data):
-        req = urllib2.Request(apiserver)
-        opener = urllib2.build_opener(urllib2.HTTPCookieProcessor())
-        response = opener.open(req, data)
-        backinfo = response.read()
-        return backinfo
+        response = requests.post(apiserver, data)
+        return response.text
 
     def _check_result(self, origin, validate):
         encodeStr = self._md5_encode(self.private_key + "geetest" + origin)
@@ -148,8 +151,9 @@ class GeetestLib(object):
             return 0
 
     def _md5_encode(self, values):
-        m = md5()
-        m.update(values)
+        if type(values) == str:
+            values = values.encode()
+        m = md5(values)
         return m.hexdigest()
 
     def _decode_rand_base(self, challenge):

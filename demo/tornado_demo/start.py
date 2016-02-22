@@ -26,6 +26,7 @@ class GetCaptchaHandler(SessionBaseHandler):
 
 class ValidateHandler(SessionBaseHandler):
     def post(self):
+        print self.session
         gt = GeetestLib(captcha_id, private_key)
         challenge = self.get_argument(gt.FN_CHALLENGE, "")
         validate = self.get_argument(gt.FN_VALIDATE, "")
@@ -34,7 +35,7 @@ class ValidateHandler(SessionBaseHandler):
         if status:
             result = gt.success_validate(challenge, validate, seccode)
         else:
-            result = gt.fail_validate(challenge, validate, seccode)
+            result = gt.failback_validate(challenge, validate, seccode)
         result = "sucess" if result else "fail"
         self.write(result)
 

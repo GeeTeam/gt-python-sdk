@@ -1,17 +1,25 @@
 #!coding:utf8
-from distutils.core import setup
+import sys
 
-from geetest import VERSION
+try:
+    from setuptools import setup
+except:
+    from distutils.core import setup
+VERSION = "3.1.2"
+
 
 
 if __name__ == "__main__":
-	setup(
-		name="geetest",
-		version=VERSION,
+    with open('requirements.txt') as f:
+        required = f.read().splitlines()
+    setup(
+        name="geetest",
+        version=VERSION,
         packages=['geetest'],
         url='http://github.com/GeeTeam/gt-python-sdk',
         license='',
         author='Geetest',
         author_email='admin@geetest.com',
         description='Geetest Python SDK',
-		)
+        install_requires=required,
+    	)
