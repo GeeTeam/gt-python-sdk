@@ -3,6 +3,7 @@ from flask import session, make_response, Flask, request, render_template
 from geetest import GeetestLib
 captcha_id = "b46d1900d0a894591916ea94ea91bd2c"
 private_key = "36fc3fe98530eea08dfc6ce76e3d24c4"
+user_id = "user_id"
 
 app = Flask(__name__)
 app.config.update(
@@ -12,7 +13,7 @@ app.config.update(
 @app.route('/getcaptcha', methods=["GET"])
 def get_captcha():
     gt =  GeetestLib(captcha_id, private_key)
-    status = gt.pre_process()
+    status = gt.pre_process(user_id)
     session[gt.GT_STATUS_SESSION_KEY] = status
     response_str = gt.get_response_str()
     return response_str
@@ -25,10 +26,10 @@ def validate_capthca():
     validate = request.form[gt.FN_VALIDATE]
     seccode = request.form[gt.FN_SECCODE]
     if status:
-        result = gt.success_validate(challenge, validate, seccode)
+        result = gt.success_validate(challenge, validate, seccode, user_id)
     else:
-        result = gt.failback_validate(challenge, validate, seccode)
-    result = "sucess" if result else "fail"
+        result = gt.failback_validate(challenge, validate, seccode, user_id)
+    result = "success" if result else "fail"
     return result
 
 @app.route('/')

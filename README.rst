@@ -1,7 +1,7 @@
 Gt Python SDK
 ===============
-使用 3.1 之前版本SDK的用户如果想更新到3.1以及以后版本请先联系极验客服,因为为了兼容老用户,新的特性需要修改验证设置
-极验验证的Python SDK目前提供基于django, flask, tornado框架的DEMO
+使用 3.1 之前版本SDK的用户如果想更新到3.1以及以后版本请先联系极验客服,因为为了兼容老用户,新的特性需要修改验证设置。
+极验验证的Python SDK目前提供基于django, flask, tornado框架的DEMO。
 本项目是面向服务器端的，具体使用可以参考我们的 `文档 <http://www.geetest.com/install/sections/idx-server-sdk.html>`_ ,客户端相关开发请参考我们的 `前端文档 <http://www.geetest.com/install/>`_.
 
 开发环境
@@ -13,7 +13,7 @@ Gt Python SDK
 快速开始
 ---------------
 
-下面使用示例代码的均以flask框架为例.
+下面使用示例代码的均以flask框架为例。
 
 1. 获取代码
 
@@ -32,14 +32,15 @@ Gt Python SDK
 3. 初始化验证
 
 
-在调用GeetestLib前请自行设定公钥和私钥：
+在调用GeetestLib前请自行设定公钥和私钥,用户id为可选项，默认为"user_id"：
 
 .. code-block :: python
 
   captach_id = "你的公钥"
   private_key = "你的私钥"
+  user_id = "user_id"
 
-根据自己的私钥出初始化验证
+根据自己的私钥初始化验证
 
 .. code-block :: python
 
@@ -50,7 +51,6 @@ Gt Python SDK
       session[gt.GT_STATUS_SESSION_KEY] = status
       response_str = gt.get_response_str()
       return response_str
-
 
 4. 二次验证
 
@@ -67,7 +67,7 @@ Gt Python SDK
           result = gt.success_validate(challenge, validate, seccode)
       else:
           result = gt.fail_validate(challenge, validate, seccode)
-      result = "sucess" if result else "fail"
+      result = "success" if result else "fail"
       return result
 
 

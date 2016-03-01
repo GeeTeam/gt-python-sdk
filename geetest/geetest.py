@@ -29,11 +29,13 @@ class GeetestLib(object):
         self.captcha_id = captcha_id
         self.sdk_version = VERSION
         self._response_str = ""
+        self.user_id = ""
 
-    def pre_process(self):
+    def pre_process(self, user_id="user_id"):
         """
         验证初始化预处理.
         """
+        self.user_id = user_id
         status, challenge = self._register()
         self._response_str = self._make_response_format(status, challenge)
         return status
@@ -79,10 +81,11 @@ class GeetestLib(object):
 
 
 
-    def success_validate(self, challenge, validate, seccode):
+    def success_validate(self, challenge, validate, seccode, user_id="user_id"):
         """
         正常模式的二次验证方式.向geetest server 请求验证结果.
         """
+        self.user_id = user_id
         if not self._check_para(challenge, validate, seccode):
             return 0
         if not self._check_result(challenge, validate):
@@ -110,12 +113,13 @@ class GeetestLib(object):
         else:
             return False
 
-    def failback_validate(self, challenge, validate, seccode):
+    def failback_validate(self, challenge, validate, seccode, user_id="user_id"):
         """
         failback模式的二次验证方式.在本地对轨迹进行简单的判断返回验证结果.
         """
         if not self._check_para(challenge, validate, seccode):
             return 0
+        self.user_id = user_id
         validate_str = validate.split('_')
         encode_ans = validate_str[0]
         encode_fbii = validate_str[1]
