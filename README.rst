@@ -1,8 +1,10 @@
 Gt Python SDK
 ===============
 使用 3.1 之前版本SDK的用户如果想更新到3.1以及以后版本请先联系极验客服,因为为了兼容老用户,新的特性需要修改验证设置。
+
 极验验证的Python SDK目前提供基于django, flask, tornado框架的DEMO。
-本项目是面向服务器端的，具体使用可以参考我们的 `文档 <http://www.geetest.com/install/sections/idx-server-sdk.html>`_ ,客户端相关开发请参考我们的 `前端文档 <http://www.geetest.com/install/>`_.
+
+本项目是面向服务器端的，具体使用可以参考我们的 `文档 <http://www.geetest.com/install/sections/idx-server-sdk.html>`_ ,客户端相关开发请参考我们的 `前端文档。 <http://www.geetest.com/install/>`_.
 
 开发环境
 ----------------
