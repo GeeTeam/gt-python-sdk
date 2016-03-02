@@ -34,13 +34,13 @@ Gt Python SDK
 3. 初始化验证
 
 
-在调用GeetestLib前请自行设定公钥和私钥,用户id为可选项，默认为"user_id"：
+在调用GeetestLib前请自行设定公钥和私钥,用户id为可选项，默认为随机数字：
 
 .. code-block :: python
 
   captach_id = "你的公钥"
   private_key = "你的私钥"
-  user_id = "user_id"
+  user_id = random.randint(1,100)
 
 根据自己的私钥初始化验证
 
@@ -48,9 +48,11 @@ Gt Python SDK
 
   @app.route('/getcaptcha', methods=["GET"])
   def get_captcha():
+      user_id = random.randint(1,100)
       gt =  GeetestLib(captcha_id, private_key)
-      status = gt.pre_process()
+      status = gt.pre_process(user_id)
       session[gt.GT_STATUS_SESSION_KEY] = status
+      session["user_id"] = user_id
       response_str = gt.get_response_str()
       return response_str
 
@@ -65,8 +67,9 @@ Gt Python SDK
       challenge = request.form[gt.FN_CHALLENGE]
       validate = request.form[gt.FN_VALIDATE]
       seccode = request.form[gt.FN_SECCODE]
+      user_id = session["user_id"]
       if status:
-          result = gt.success_validate(challenge, validate, seccode)
+          result = gt.success_validate(challenge, validate, seccode, user_id)
       else:
           result = gt.fail_validate(challenge, validate, seccode)
       result = "success" if result else "fail"

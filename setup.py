@@ -8,7 +8,6 @@ except:
 VERSION = "3.1.2"
 
 
-
 if __name__ == "__main__":
     with open('requirements.txt') as f:
         required = f.read().splitlines()

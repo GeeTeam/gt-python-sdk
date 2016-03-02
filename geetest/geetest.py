@@ -29,19 +29,17 @@ class GeetestLib(object):
         self.captcha_id = captcha_id
         self.sdk_version = VERSION
         self._response_str = ""
-        self.user_id = ""
 
-    def pre_process(self, user_id="user_id"):
+    def pre_process(self, user_id=None):
         """
         验证初始化预处理.
         """
-        self.user_id = user_id
-        status, challenge = self._register()
+        status, challenge = self._register(user_id)
         self._response_str = self._make_response_format(status, challenge)
         return status
 
-    def _register(self):
-        challenge = self._register_challenge()
+    def _register(self, user_id=None):
+        challenge = self._register_challenge(user_id)
         if len(challenge) == 32:
             challenge = self._md5_encode("".join([challenge, self.private_key]))
             return 1, challenge
@@ -63,12 +61,16 @@ class GeetestLib(object):
         if not challenge:
             challenge = self._make_fail_challenge()
         string_format = json.dumps(
-            {'success': success, 'gt':self.captcha_id ,'challenge': challenge})
+            {'success': success, 'gt':self.captcha_id, 'challenge': challenge})
         return string_format
 
-    def _register_challenge(self):
-        register_url = "{api_url}{handler}?gt={captcha_ID}".format(
-            api_url=self.API_URL, handler=self.REGISTER_HANDLER, captcha_ID=self.captcha_id)
+    def _register_challenge(self, user_id=None):
+        if user_id:
+            register_url = "{api_url}{handler}?gt={captcha_ID}&user_id={user_id}".format(
+                api_url=self.API_URL, handler=self.REGISTER_HANDLER, captcha_ID=self.captcha_id, user_id=user_id)
+        else:
+            register_url = "{api_url}{handler}?gt={captcha_ID}".format(
+                api_url=self.API_URL, handler=self.REGISTER_HANDLER, captcha_ID=self.captcha_id)
         try:
             response = requests.get(register_url, timeout=2)
             if response.status_code == requests.codes.ok:
@@ -79,13 +81,10 @@ class GeetestLib(object):
             res_string = ""
         return res_string
 
-
-
-    def success_validate(self, challenge, validate, seccode, user_id="user_id"):
+    def success_validate(self, challenge, validate, seccode, user_id=None):
         """
         正常模式的二次验证方式.向geetest server 请求验证结果.
         """
-        self.user_id = user_id
         if not self._check_para(challenge, validate, seccode):
             return 0
         if not self._check_result(challenge, validate):
@@ -94,7 +93,8 @@ class GeetestLib(object):
             api_url=self.API_URL, handler=self.VALIDATE_HANDLER)
         query = {
             "seccode": seccode,
-            "sdk": ''.join( ["python_",self.sdk_version])
+            "sdk": ''.join( ["python_",self.sdk_version]),
+            "user_id": user_id
         }
         backinfo = self._post_values(validate_url, query)
         if backinfo == self._md5_encode(seccode):
@@ -113,13 +113,12 @@ class GeetestLib(object):
         else:
             return False
 
-    def failback_validate(self, challenge, validate, seccode, user_id="user_id"):
+    def failback_validate(self, challenge, validate, seccode):
         """
         failback模式的二次验证方式.在本地对轨迹进行简单的判断返回验证结果.
         """
         if not self._check_para(challenge, validate, seccode):
             return 0
-        self.user_id = user_id
         validate_str = validate.split('_')
         encode_ans = validate_str[0]
         encode_fbii = validate_str[1]
