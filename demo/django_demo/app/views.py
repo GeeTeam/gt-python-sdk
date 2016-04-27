@@ -1,5 +1,5 @@
 # coding:utf-8
-import random
+import json
 
 from django.shortcuts import render_to_response, RequestContext
 from django.http import HttpResponse
@@ -15,7 +15,7 @@ def home(request):
 
 
 def getcaptcha(request):
-    user_id = random.randint(1,100)
+    user_id = 'test'
     gt = GeetestLib(captcha_id, private_key)
     status = gt.pre_process(user_id)
     request.session[gt.GT_STATUS_SESSION_KEY] = status
@@ -36,6 +36,22 @@ def validate(request):
             result = gt.success_validate(challenge, validate, seccode, user_id)
         else:
             result = gt.failback_validate(challenge, validate, seccode)
-        result = "success" if result else "fail"
+        result = "<html><body><h1>登录成功</h1></body></html>" if result else "<html><body><h1>登录失败</h1></body></html>"
         return HttpResponse(result)
+    return HttpResponse("error")
+
+def ajax_validate(request):
+    if request.method == "POST":
+        gt = GeetestLib(captcha_id, private_key)
+        challenge = request.POST.get(gt.FN_CHALLENGE, '')
+        validate = request.POST.get(gt.FN_VALIDATE, '')
+        seccode = request.POST.get(gt.FN_SECCODE, '')
+        status = request.session[gt.GT_STATUS_SESSION_KEY]
+        user_id = request.session["user_id"]
+        if status:
+            result = gt.success_validate(challenge, validate, seccode, user_id)
+        else:
+            result = gt.failback_validate(challenge, validate, seccode)
+        result = {"status":"success"} if result else {"status":"fail"}
+        return HttpResponse(json.dumps(result))
     return HttpResponse("error")

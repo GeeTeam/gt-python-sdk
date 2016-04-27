@@ -1,5 +1,5 @@
 # coding:utf-8
-import random
+import json
 
 from flask import session, make_response, Flask, request, render_template
 from geetest import GeetestLib
@@ -13,10 +13,10 @@ app.config.update(
 )
 
 
-@app.route('/getcaptcha', methods=["GET"])
+@app.route('/register', methods=["GET"])
 def get_captcha():
-    user_id = random.randint(1,100)
-    gt =  GeetestLib(captcha_id, private_key)
+    user_id = 'test'
+    gt = GeetestLib(captcha_id, private_key)
     status = gt.pre_process(user_id)
     session[gt.GT_STATUS_SESSION_KEY] = status
     session["user_id"] = user_id
@@ -34,11 +34,27 @@ def validate_capthca():
     user_id = session["user_id"]
     if status:
         result = gt.success_validate(challenge, validate, seccode, user_id)
+        print 111
     else:
         result = gt.failback_validate(challenge, validate, seccode)
-    result = "success" if result else "fail"
+        print 222
+    result = "<html><body><h1>登录成功</h1></body></html>" if result else "<html><body><h1>登录失败</h1></body></html>"
     return result
 
+@app.route('/ajax_validate', methods=["POST"])
+def ajax_validate():
+    gt = GeetestLib(captcha_id, private_key)
+    challenge = request.form[gt.FN_CHALLENGE]
+    validate = request.form[gt.FN_VALIDATE]
+    seccode = request.form[gt.FN_SECCODE]
+    status = session[gt.GT_STATUS_SESSION_KEY]
+    user_id = session["user_id"]
+    if status:
+        result = gt.success_validate(challenge, validate, seccode, user_id)
+    else:
+        result = gt.failback_validate(challenge, validate, seccode)
+    result = {"status":"success"} if result else {"status":"fail"}
+    return json.dumps(result)
 
 @app.route('/')
 def login():
