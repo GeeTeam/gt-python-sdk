@@ -81,7 +81,7 @@ class GeetestLib(object):
             res_string = ""
         return res_string
 
-    def success_validate(self, challenge, validate, seccode, user_id=None):
+    def success_validate(self, challenge, validate, seccode, user_id=None,gt=None,data={},userinfo=''):
         """
         正常模式的二次验证方式.向geetest server 请求验证结果.
         """
@@ -94,7 +94,12 @@ class GeetestLib(object):
         query = {
             "seccode": seccode,
             "sdk": ''.join( ["python_",self.sdk_version]),
-            "user_id": user_id
+            "user_id": user_id,
+            "data":data,
+            "timestamp":time.time(),
+            "challenge":challenge,
+            "userinfo":userinfo,
+            "captchaid":gt
         }
         backinfo = self._post_values(validate_url, query)
         if backinfo == self._md5_encode(seccode):
