@@ -82,7 +82,7 @@ class GeetestLib(object):
             res_string = ""
         return res_string
 
-    def success_validate(self, challenge, validate, seccode, user_id=None,gt=None,data={},userinfo=''):
+    def success_validate(self, challenge, validate, seccode, user_id=None,gt=None,data='',userinfo=''):
         """
         正常模式的二次验证方式.向geetest server 请求验证结果.
         """

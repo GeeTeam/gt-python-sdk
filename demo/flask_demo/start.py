@@ -50,7 +50,7 @@ def ajax_validate():
     status = session[gt.GT_STATUS_SESSION_KEY]
     user_id = session["user_id"]
     if status:
-        result = gt.success_validate(challenge, validate, seccode, user_id)
+        result = gt.success_validate(challenge, validate, seccode, user_id,data='',userinfo='')
     else:
         result = gt.failback_validate(challenge, validate, seccode)
     result = {"status":"success"} if result else {"status":"fail"}
