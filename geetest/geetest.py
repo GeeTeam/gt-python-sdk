@@ -24,6 +24,7 @@ class GeetestLib(object):
     API_URL = "http://api.geetest.com"
     REGISTER_HANDLER = "/register.php"
     VALIDATE_HANDLER = "/validate.php"
+    JSON_FORMAT = False
 
     def __init__(self, captcha_id, private_key):
         self.private_key = private_key
@@ -31,19 +32,23 @@ class GeetestLib(object):
         self.sdk_version = VERSION
         self._response_str = ""
 
-    def pre_process(self, user_id=None):
+
+    def pre_process(self, user_id=None,JSON_FORMAT=1):
         """
         验证初始化预处理.
         """
-        status, challenge = self._register(user_id)
+        status, challenge = self._register(user_id,JSON_FORMAT)
         self._response_str = self._make_response_format(status, challenge)
         return status
 
-    def _register(self, user_id=None):
-        challenge = self._register_challenge(user_id)
+    def _register(self, user_id=None,JSON_FORMAT=1):
+        pri_responce = self._register_challenge(user_id,JSON_FORMAT)
+        if JSON_FORMAT == 1:
+            response_dic = json.loads(pri_responce)
+            challenge = response_dic["challenge"]
         if len(challenge) == 32:
             challenge = self._md5_encode("".join([challenge, self.private_key]))
-            return 1, challenge
+            return 1,challenge
         else:
             return 0, self._make_fail_challenge()
 
@@ -65,13 +70,13 @@ class GeetestLib(object):
             {'success': success, 'gt':self.captcha_id, 'challenge': challenge})
         return string_format
 
-    def _register_challenge(self, user_id=None):
+    def _register_challenge(self, user_id=None,JSON_FORMAT=1):
         if user_id:
-            register_url = "{api_url}{handler}?gt={captcha_ID}&user_id={user_id}".format(
-                api_url=self.API_URL, handler=self.REGISTER_HANDLER, captcha_ID=self.captcha_id, user_id=user_id)
+            register_url = "{api_url}{handler}?gt={captcha_ID}&user_id={user_id}&json_format={JSON_FORMAT}".format(
+                    api_url=self.API_URL, handler=self.REGISTER_HANDLER, captcha_ID=self.captcha_id, user_id=user_id,JSON_FORMAT=JSON_FORMAT)
         else:
-            register_url = "{api_url}{handler}?gt={captcha_ID}".format(
-                api_url=self.API_URL, handler=self.REGISTER_HANDLER, captcha_ID=self.captcha_id)
+            register_url = "{api_url}{handler}?gt={captcha_ID}&json_format={JSON_FORMAT}".format(
+                    api_url=self.API_URL, handler=self.REGISTER_HANDLER, captcha_ID=self.captcha_id,JSON_FORMAT=JSON_FORMAT)
         try:
             response = requests.get(register_url, timeout=2)
             if response.status_code == requests.codes.ok:
@@ -82,7 +87,7 @@ class GeetestLib(object):
             res_string = ""
         return res_string
 
-    def success_validate(self, challenge, validate, seccode, user_id=None,gt=None,data='',userinfo=''):
+    def success_validate(self, challenge, validate, seccode, user_id=None,gt=None,data='',userinfo='',JSON_FORMAT=1):
         """
         正常模式的二次验证方式.向geetest server 请求验证结果.
         """
@@ -100,9 +105,13 @@ class GeetestLib(object):
             "timestamp":time.time(),
             "challenge":challenge,
             "userinfo":userinfo,
-            "captchaid":gt
+            "captchaid":gt,
+            "JSON_FORMAT":JSON_FORMAT
         }
         backinfo = self._post_values(validate_url, query)
+        if JSON_FORMAT == 1:
+            backinfo = json.loads(backinfo)
+            backinfo = backinfo["seccode"]
         if backinfo == self._md5_encode(seccode):
             return 1
         else:
@@ -180,16 +189,16 @@ class GeetestLib(object):
     def _decode_response(self, challenge, userresponse):
         if len(userresponse) > 100:
             return 0
-        shuzi = (1, 2, 5, 10, 50)
-        chongfu = set()
+        number = (1, 2, 5, 10, 50)
+        repeat = set()
         key = {}
         count = 0
         for i in challenge:
-            if i in chongfu:
+            if i in repeat:
                 continue
             else:
-                value = shuzi[count % 5]
-                chongfu.add(i)
+                value = number[count % 5]
+                repeat.add(i)
                 count += 1
                 key.update({i: value})
         res = 0

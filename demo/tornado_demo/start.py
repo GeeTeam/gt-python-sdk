@@ -14,8 +14,6 @@ mobile_geetest_id = "7c25da6fe21944cfe507d2f9876775a9"
 mobile_geetest_key = "f5883f4ee3bd4fa8caec67941de1b903"
 
 product = "embed"
-# 弹出式
-# product = "popup&popupbtnid=submit-button"
 
 
 class MainHandler(tornado.web.RequestHandler):
