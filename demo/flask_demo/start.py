@@ -4,10 +4,10 @@ import json
 from flask import session, make_response, Flask, request, render_template
 from geetest import GeetestLib
 
-pc_geetest_id = "b46d1900d0a894591916ea94ea91bd2c"
-pc_geetest_key = "36fc3fe98530eea08dfc6ce76e3d24c4"
-mobile_geetest_id = "7c25da6fe21944cfe507d2f9876775a9"
-mobile_geetest_key = "f5883f4ee3bd4fa8caec67941de1b903"
+pc_geetest_id = "6f1ecf26ea05d03584319348bfc7594b"
+pc_geetest_key = "05ff7b722d3ad37304db391e121da926"
+mobile_geetest_id = "48a6ebac4ebc6642d68c217fca33eb4d"
+mobile_geetest_key = "4f1c085290bec5afdc54df73535fc361"
 app = Flask(__name__)
 app.config.update(
     DEBUG=True,

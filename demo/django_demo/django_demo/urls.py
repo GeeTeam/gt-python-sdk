@@ -1,8 +1,10 @@
-from django.conf.urls import patterns, url
+from django.conf.urls import  url
 
-urlpatterns = patterns('',
-    url(r'^register', 'app.views.getcaptcha', name='getcaptcha'),
-    url(r'^validate$', 'app.views.validate', name='validate'),
-    url(r'^ajax_validate','app.views.ajax_validate', name='ajax_validate'),
+urlpatterns = ['',
+    url(r'^pc-geetest/register', 'app.views.pcgetcaptcha', name='pcgetcaptcha'),
+    url(r'^mobile-geetest/register', 'app.views.mobilegetcaptcha', name='mobilegetcaptcha'),
+    url(r'^pc-geetest/validate$', 'app.views.pcvalidate', name='pcvalidate'),
+    url(r'^pc-geetest/ajax_validate','app.views.pcajax_validate', name='pcajax_validate'),
+    url(r'^mobile-geetest/ajax_validate','app.views.mobileajax_validate', name='mobileajax_validate'),
     url(r'/*', 'app.views.home', name='home'),
-)
+]
