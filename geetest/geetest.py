@@ -33,19 +33,24 @@ class GeetestLib(object):
         self._response_str = ""
 
 
-    def pre_process(self, user_id=None,JSON_FORMAT=1):
+    def pre_process(self, user_id=None,new_captcha=1,JSON_FORMAT=1):
         """
         验证初始化预处理.
         """
-        status, challenge = self._register(user_id,JSON_FORMAT)
-        self._response_str = self._make_response_format(status, challenge)
+        status, challenge = self._register(user_id,new_captcha,JSON_FORMAT)
+        self._response_str = self._make_response_format(status, challenge,new_captcha)
         return status
 
-    def _register(self, user_id=None,JSON_FORMAT=1):
-        pri_responce = self._register_challenge(user_id,JSON_FORMAT)
-        if JSON_FORMAT == 1:
-            response_dic = json.loads(pri_responce)
-            challenge = response_dic["challenge"]
+    def _register(self, user_id=None,new_captcha=1,JSON_FORMAT=1):
+        pri_responce = self._register_challenge(user_id,new_captcha,JSON_FORMAT)
+        if pri_responce:
+            if JSON_FORMAT == 1:
+                response_dic = json.loads(pri_responce)
+                challenge = response_dic["challenge"]
+            else:
+                challenge = pri_responce
+        else:
+            challenge=" "
         if len(challenge) == 32:
             challenge = self._md5_encode("".join([challenge, self.private_key]))
             return 1,challenge
@@ -63,20 +68,24 @@ class GeetestLib(object):
         challenge = md5_str1 + md5_str2[0:2]
         return challenge
 
-    def _make_response_format(self, success=1, challenge=None):
+    def _make_response_format(self, success=1, challenge=None,new_captcha=1):
         if not challenge:
             challenge = self._make_fail_challenge()
-        string_format = json.dumps(
-            {'success': success, 'gt':self.captcha_id, 'challenge': challenge})
+        if new_captcha:
+            string_format = json.dumps(
+                {'success': success, 'gt':self.captcha_id, 'challenge': challenge,"new_captcha":True})
+        else:
+            string_format = json.dumps(
+                {'success': success, 'gt':self.captcha_id, 'challenge': challenge,"new_captcha":False})
         return string_format
 
-    def _register_challenge(self, user_id=None,JSON_FORMAT=1):
+    def _register_challenge(self, user_id=None,new_captcha=1,JSON_FORMAT=1):
         if user_id:
             register_url = "{api_url}{handler}?gt={captcha_ID}&user_id={user_id}&json_format={JSON_FORMAT}".format(
-                    api_url=self.API_URL, handler=self.REGISTER_HANDLER, captcha_ID=self.captcha_id, user_id=user_id,JSON_FORMAT=JSON_FORMAT)
+                    api_url=self.API_URL, handler=self.REGISTER_HANDLER, captcha_ID=self.captcha_id, user_id=user_id,new_captcha=new_captcha,JSON_FORMAT=JSON_FORMAT)
         else:
             register_url = "{api_url}{handler}?gt={captcha_ID}&json_format={JSON_FORMAT}".format(
-                    api_url=self.API_URL, handler=self.REGISTER_HANDLER, captcha_ID=self.captcha_id,JSON_FORMAT=JSON_FORMAT)
+                    api_url=self.API_URL, handler=self.REGISTER_HANDLER, captcha_ID=self.captcha_id,new_captcha=new_captcha,JSON_FORMAT=JSON_FORMAT)
         try:
             response = requests.get(register_url, timeout=2)
             if response.status_code == requests.codes.ok:
@@ -106,7 +115,7 @@ class GeetestLib(object):
             "challenge":challenge,
             "userinfo":userinfo,
             "captchaid":gt,
-            "JSON_FORMAT":JSON_FORMAT
+            "json_format":JSON_FORMAT
         }
         backinfo = self._post_values(validate_url, query)
         if JSON_FORMAT == 1:
@@ -134,39 +143,23 @@ class GeetestLib(object):
         """
         if not self._check_para(challenge, validate, seccode):
             return 0
-        validate_str = validate.split('_')
-        encode_ans = validate_str[0]
-        encode_fbii = validate_str[1]
-        encode_igi = validate_str[2]
-        decode_ans = self._decode_response(challenge, encode_ans)
-        decode_fbii = self._decode_response(challenge, encode_fbii)
-        decode_igi = self._decode_response(challenge, encode_igi)
-        validate_result = self._validate_fail_image(
-            decode_ans, decode_fbii, decode_igi)
+        validate_result = self._failback_check_result(
+            challenge, validate,)
         return validate_result
+
+    def _failback_check_result(self,challenge,validate):
+        encodeStr = self._md5_encode(challenge)
+        if validate == encodeStr:
+            return True
+        else:
+            return False
+
+
 
     def _check_para(self, challenge, validate, seccode):
         return (bool(challenge.strip()) and bool(validate.strip()) and  bool(seccode.strip()))
 
-    def _validate_fail_image(self, ans, full_bg_index , img_grp_index):
-        thread = 3
-        full_bg_name = str(self._md5_encode(str(full_bg_index)))[0:10]
-        bg_name = str(self._md5_encode(str(img_grp_index)))[10:20]
-        answer_decode = ""
-        for i in range(0,9):
-            if i % 2 == 0:
-                answer_decode += full_bg_name[i]
-            elif i % 2 == 1:
-                answer_decode += bg_name[i]
-        x_decode = answer_decode[4:]
-        x_int = int(x_decode, 16)
-        result = x_int % 200
-        if result < 40:
-            result = 40
-        if abs(ans - result) < thread:
-            return 1
-        else:
-            return 0
+
 
     def _md5_encode(self, values):
         if type(values) == str:
@@ -174,35 +167,3 @@ class GeetestLib(object):
         m = md5(values)
         return m.hexdigest()
 
-    def _decode_rand_base(self, challenge):
-        str_base = challenge[32:]
-        i = 0
-        temp_array = []
-        for i in xrange(len(str_base)):
-            temp_char = str_base[i]
-            temp_ascii = ord(temp_char)
-            result = temp_ascii - 87 if temp_ascii > 57 else temp_ascii - 48
-            temp_array.append(result)
-        decode_res = temp_array[0]*36 + temp_array[1]
-        return decode_res
-
-    def _decode_response(self, challenge, userresponse):
-        if len(userresponse) > 100:
-            return 0
-        number = (1, 2, 5, 10, 50)
-        repeat = set()
-        key = {}
-        count = 0
-        for i in challenge:
-            if i in repeat:
-                continue
-            else:
-                value = number[count % 5]
-                repeat.add(i)
-                count += 1
-                key.update({i: value})
-        res = 0
-        for i in userresponse:
-            res += key.get(i, 0)
-        res = res - self._decode_rand_base(challenge)
-        return res

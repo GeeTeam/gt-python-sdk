@@ -26,6 +26,8 @@ class PcGetCaptchaHandler(SessionBaseHandler):
         user_id = 'test'
         gt = GeetestLib(pc_geetest_id, pc_geetest_key)
         status = gt.pre_process(user_id)
+        if not status:
+            status=2
         self.session[gt.GT_STATUS_SESSION_KEY] = status
         self.session["user_id"] = user_id
         response_str = gt.get_response_str()
@@ -49,7 +51,7 @@ class PcValidateHandler(SessionBaseHandler):
         seccode = self.get_argument(gt.FN_SECCODE, "")
         status = self.session[gt.GT_STATUS_SESSION_KEY]
         user_id = self.session["user_id"]
-        if status:
+        if status==1:
             result = gt.success_validate(challenge, validate, seccode, user_id)
         else:
             result = gt.failback_validate(challenge, validate, seccode)
@@ -66,7 +68,7 @@ class PcAjaxValidateHandler(SessionBaseHandler):
         seccode = self.get_argument(gt.FN_SECCODE, "")
         status = self.session[gt.GT_STATUS_SESSION_KEY]
         user_id = self.session["user_id"]
-        if status:
+        if status==1:
             result = gt.success_validate(challenge, validate, seccode, user_id)
         else:
             result = gt.failback_validate(challenge, validate, seccode)
