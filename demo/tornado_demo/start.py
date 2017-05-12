@@ -20,7 +20,9 @@ product = "embed"
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
         self.render("static/login.html",)
-
+class JsHandler(tornado.web.RequestHandler):
+    def get(self):
+        self.render("static/gt.js",)
 
 class PcGetCaptchaHandler(SessionBaseHandler):
     def get(self):
@@ -94,6 +96,7 @@ class MobileAjaxValidateHandler(SessionBaseHandler):
 if __name__ == "__main__":
     app = tornado.web.Application([
                                       (r"/", MainHandler),
+                                      (r"/static/gt.js",JsHandler),
                                       (r"/pc-geetest/register", PcGetCaptchaHandler),
                                       (r"/mobile-geetest/register",MobileGetCaptchaHandler),
                                       (r"/pc-geetest/validate", PcValidateHandler),
